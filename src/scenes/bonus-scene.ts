@@ -5,7 +5,7 @@ import { Rect } from '../levels/level-data';
 import { PHYSICS, SCORING } from '../core/constants';
 import { SWING_BY_DIFFICULTY } from '../core/settings';
 import { PALETTE, OVERLAY } from '../render/colors';
-import { renderHud, hudHeight } from '../render/hud';
+import { renderHud, hudTotalHeight } from '../render/hud';
 import { TouchControls } from '../render/touch-controls';
 import { circleCircle } from '../math/collision';
 
@@ -192,7 +192,7 @@ export class BonusScene implements Scene {
   render(ctx: SceneContext): void {
     const r = ctx.r;
     r.beginFrame();
-    const top = hudHeight(r) + 24;
+    const top = hudTotalHeight(r);
     r.fitWorld({ x: 0, y: 0, w: W, h: H }, { x: 0, y: top, w: r.width, h: r.height - top });
 
     r.worldRect(0, 0, W, H, PALETTE.bg);

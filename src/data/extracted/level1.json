@@ -22,6 +22,5 @@
   "movingWalls": [],
   "pipes": [],
   "launchers": [],
-  "spikyBallOnFlagA": false,
-  "cameraAcross": 160
+  "spikyBallOnFlagA": false
 }

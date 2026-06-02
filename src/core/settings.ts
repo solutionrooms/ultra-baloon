@@ -32,7 +32,9 @@ export function saveSettings(s: Settings): void {
 }
 
 export function loadProgress(): Progress {
-  return load<Progress>(PROGRESS_KEY, PROGRESS_DEFAULTS);
+  const p = load<Progress>(PROGRESS_KEY, PROGRESS_DEFAULTS);
+  const lvl = Number.isFinite(p.highestLevel) && p.highestLevel >= 1 ? Math.floor(p.highestLevel) : 1;
+  return { highestLevel: lvl };
 }
 
 export function saveProgress(p: Progress): void {

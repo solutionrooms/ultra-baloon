@@ -44,7 +44,14 @@ export class PreferencesScene implements Scene {
   }
 
   update(_dt: number, ctx: SceneContext): void {
-    if (this.capturing) return;
+    if (this.capturing) {
+      // Allow cancelling a rebind by tapping (touch devices have no keyboard to press Esc).
+      if (ctx.input.taps.length > 0) {
+        this.capturing = null;
+        ctx.input.captureKey = null;
+      }
+      return;
+    }
     const r = ctx.r;
     const big = Math.min(r.width, r.height);
     this.menu.update(r, ctx.input, r.width / 2, r.height * 0.24, big * 0.04, big * 0.075);
@@ -60,7 +67,7 @@ export class PreferencesScene implements Scene {
       r.ctx.fillStyle = OVERLAY.panel;
       r.ctx.fillRect(0, 0, r.width, r.height);
       r.text('Press a key…', r.width / 2, r.height * 0.46, big * 0.06, PALETTE.bg, 'center', 'middle');
-      r.text('(Esc to cancel)', r.width / 2, r.height * 0.54, big * 0.035, PALETTE.light, 'center', 'middle');
+      r.text('(Esc or tap to cancel)', r.width / 2, r.height * 0.54, big * 0.035, PALETTE.light, 'center', 'middle');
     }
   }
 }

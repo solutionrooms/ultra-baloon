@@ -119,6 +119,17 @@ Companion to [`lander_prd.md`](./lander_prd.md). Recreate **"The Mad Balloon" /
 4. **M3 — Full game shell**: bonus level, screens, touch, persistence, audio.
 5. **M4 — Shipped**: deployed to GitHub Pages, mobile-tested.
 
-## Status snapshot
-- Source extracted to `balloon_rom/`; resources split to `re/resources/`.
-- Disassembly pipeline proven. Next: trap table + locate level-1 data.
+## Status snapshot (built)
+- **Phase 0 (RE) — done.** `re/FINDINGS.md` documents byte-exact recovery: 10-level descriptor
+  table @0x7b88, Level-1 object coords (start 64,103 / goal 68,147 / flag A 45,46 / flag B 73,62),
+  scoring/timer (timer starts **999**), the direct-thrust move model, and the 32×32 app icon.
+  Notable: the pendulum-swing sine code shipped **disabled** in v1.0 (dead), so the swing here is a
+  manual-faithful reconstruction; level walls are a compressed `MPF` bitmap (located, not yet
+  decompressed) so Level 1's maze is reconstructed around the recovered landmarks.
+- **Phases 1–6 — done.** Full game built on the landitar stack: balloon-with-basket player, Mr.
+  Blower profile face, brick-textured monochrome walls, flags/goal, bonus room + survival level,
+  title/options/high-scores/about/key-remap, touch controls, audio, pause→quit, high-score entry.
+- Adversarial multi-agent review run (16 findings) and all fixed (timer rate, WASD double-fire,
+  resize realloc, scene-race guard, touch soft-lock, corrupted-storage guards, HUD spacing, …).
+- Verified in-browser: title → play → swing/collide/scroll → reach goal → next lap → pause/quit.
+- **Future:** decompress the `MPF` maze for byte-exact walls; add levels 2–10 from a registered ROM.

@@ -22,6 +22,8 @@ const ctx: SceneContext = {
   settings,
   saveSettings: () => saveSettings(settings),
   setScene: (s: Scene) => {
+    // First request wins — avoids async-import races queuing two transitions.
+    if (pending) return;
     pending = s;
   },
 };
@@ -29,6 +31,7 @@ const ctx: SceneContext = {
 function activate(scene: Scene): void {
   current?.onExit?.(ctx);
   current = scene;
+  input.resetTransient();
   current.onEnter?.(ctx);
 }
 
@@ -45,8 +48,13 @@ function frame(now: number): void {
   if (dt > 0.05) dt = 0.05; // clamp big stalls (tab switches)
 
   renderer.resize();
-  current.update(dt, ctx);
-  current.render(ctx);
+  try {
+    current.update(dt, ctx);
+    current.render(ctx);
+  } catch (e) {
+    // Keep the loop alive on a transient error rather than freezing the game.
+    console.error('[ultra-balloon] frame error:', e);
+  }
   input.endFrame();
 
   if (pending) {

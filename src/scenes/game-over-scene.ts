@@ -51,22 +51,23 @@ export class GameOverScene implements Scene {
     const r = ctx.r;
 
     if (this.entering) {
-      // keyboard letter typing
-      for (let c = 0; c < LETTERS.length; c++) {
-        const code = c < 26 ? 'Key' + LETTERS[c] : null;
-        if (code && ctx.input.codePressed(code)) {
+      this.layoutEntry(r); // hit-rects for the current frame
+      // keyboard letter typing (KeyA–KeyZ)
+      for (let c = 0; c < 26; c++) {
+        if (ctx.input.codePressed('Key' + LETTERS[c])) {
           this.initials[this.cursor] = c;
           this.cursor = Math.min(2, this.cursor + 1);
           ctx.audio.play('menu');
         }
       }
-      if (ctx.input.wasPressed('left')) this.cursor = (this.cursor + 2) % 3;
-      if (ctx.input.wasPressed('right')) this.cursor = (this.cursor + 1) % 3;
-      if (ctx.input.wasPressed('up')) {
+      // navigation via the raw arrow codes (so WASD letters don't double-fire)
+      if (ctx.input.codePressed('ArrowLeft')) this.cursor = (this.cursor + 2) % 3;
+      if (ctx.input.codePressed('ArrowRight')) this.cursor = (this.cursor + 1) % 3;
+      if (ctx.input.codePressed('ArrowUp')) {
         this.initials[this.cursor] = (this.initials[this.cursor] + 1) % LETTERS.length;
         ctx.audio.play('menu');
       }
-      if (ctx.input.wasPressed('down')) {
+      if (ctx.input.codePressed('ArrowDown')) {
         this.initials[this.cursor] = (this.initials[this.cursor] + LETTERS.length - 1) % LETTERS.length;
         ctx.audio.play('menu');
       }
@@ -119,9 +120,8 @@ export class GameOverScene implements Scene {
     }
   }
 
-  private renderEntry(r: Renderer): void {
+  private layoutEntry(r: Renderer): void {
     const big = Math.min(r.width, r.height);
-    r.text('NEW HIGH SCORE — ENTER INITIALS', r.width / 2, r.height * 0.36, big * 0.04, PALETTE.ink, 'center', 'middle');
     const cy = r.height * 0.52;
     const slotW = big * 0.13;
     const startX = r.width / 2 - slotW;
@@ -129,21 +129,32 @@ export class GameOverScene implements Scene {
     this.slotRects = [];
     for (let s = 0; s < 3; s++) {
       const cx = startX + s * slotW;
-      const sel = s === this.cursor;
-      // up arrow
       this.slotRects.push({ x: cx - slotW * 0.35, y: cy - fs * 0.95, w: slotW * 0.7, h: fs * 0.5, dir: 1, slot: s });
-      // down arrow
       this.slotRects.push({ x: cx - slotW * 0.35, y: cy + fs * 0.45, w: slotW * 0.7, h: fs * 0.5, dir: -1, slot: s });
+    }
+    const okW = big * 0.26;
+    const okH = big * 0.08;
+    this.okRect = { x: r.width / 2 - okW / 2, y: r.height * 0.68, w: okW, h: okH };
+  }
+
+  private renderEntry(r: Renderer): void {
+    const big = Math.min(r.width, r.height);
+    this.layoutEntry(r);
+    r.text('NEW HIGH SCORE — ENTER INITIALS', r.width / 2, r.height * 0.36, big * 0.04, PALETTE.ink, 'center', 'middle');
+    const cy = r.height * 0.52;
+    const slotW = big * 0.13;
+    const startX = r.width / 2 - slotW;
+    const fs = big * 0.11;
+    for (let s = 0; s < 3; s++) {
+      const cx = startX + s * slotW;
+      const sel = s === this.cursor;
       r.text('▲', cx, cy - fs * 0.7, fs * 0.4, PALETTE.mid, 'center', 'middle');
       r.text('▼', cx, cy + fs * 0.7, fs * 0.4, PALETTE.mid, 'center', 'middle');
       if (sel) r.roundRect(cx - slotW * 0.4, cy - fs * 0.4, slotW * 0.8, fs * 0.8, 4, OVERLAY.faint);
       r.text(LETTERS[this.initials[s]], cx, cy, fs, PALETTE.ink, 'center', 'middle');
     }
-    const okW = big * 0.26;
-    const okH = big * 0.08;
-    this.okRect = { x: r.width / 2 - okW / 2, y: r.height * 0.68, w: okW, h: okH };
-    r.roundRect(this.okRect.x, this.okRect.y, okW, okH, 6, PALETTE.ink);
-    r.text('OK', r.width / 2, this.okRect.y + okH / 2, okH * 0.55, PALETTE.bg, 'center', 'middle');
+    r.roundRect(this.okRect.x, this.okRect.y, this.okRect.w, this.okRect.h, 6, PALETTE.ink);
+    r.text('OK', r.width / 2, this.okRect.y + this.okRect.h / 2, this.okRect.h * 0.55, PALETTE.bg, 'center', 'middle');
     r.text('type letters · arrows · Enter', r.width / 2, r.height * 0.8, big * 0.032, PALETTE.mid, 'center', 'middle');
   }
 

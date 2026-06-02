@@ -52,6 +52,4 @@ export interface LevelData {
   launchers: Launcher[];
   spikyBallOnFlagA: boolean;
   spikyBall?: SpikyBall;
-  /** If set, camera follows the balloon showing this many world units across; else whole level fits. */
-  cameraAcross?: number;
 }

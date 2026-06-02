@@ -31,9 +31,20 @@ export class Audio {
     return this.ctx;
   }
 
-  /** Call on first user gesture to unlock audio on mobile. */
+  /** Call on first user gesture to unlock audio on mobile. Primes the context with a
+   * silent buffer so the very first SFX isn't dropped while resume() is still pending (iOS). */
   unlock(): void {
-    this.ensure();
+    const ctx = this.ensure();
+    if (!ctx) return;
+    try {
+      const buf = ctx.createBuffer(1, 1, 22050);
+      const src = ctx.createBufferSource();
+      src.buffer = buf;
+      src.connect(ctx.destination);
+      src.start(0);
+    } catch {
+      /* ignore */
+    }
   }
 
   private beep(freq: number, dur: number, type: OscillatorType, vol = 0.18, slideTo?: number): void {

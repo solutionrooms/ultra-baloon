@@ -17,6 +17,12 @@ export function hudHeight(r: Renderer): number {
   return Math.max(28, Math.min(r.width, r.height) * 0.07);
 }
 
+/** Full vertical extent of the HUD (panel + timer row + level-name row), scaled so the
+ * play area never overlaps the HUD text on large screens. */
+export function hudTotalHeight(r: Renderer): number {
+  return hudHeight(r) * 1.5 + 8;
+}
+
 export function renderHud(r: Renderer, d: HudData): void {
   const { ctx } = r;
   const h = hudHeight(r);

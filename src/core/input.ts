@@ -135,4 +135,12 @@ export class InputManager {
     this.pressedThisFrame.clear();
     this.taps.length = 0;
   }
+
+  /** Clear transient input on scene changes so a held finger/key can't leak across. */
+  resetTransient(): void {
+    this.pressedThisFrame.clear();
+    this.taps.length = 0;
+    this.pointers.clear();
+    this.touchActions.clear();
+  }
 }

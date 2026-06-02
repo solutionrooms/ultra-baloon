@@ -8,16 +8,17 @@ import { SpikyBall } from '../entities/spiky-ball';
 import { MrBlower } from '../entities/mr-blower';
 import { HazardField } from '../entities/hazards';
 import { resolveCircleVsRects } from '../levels/maze';
-import { PHYSICS, SCORING } from '../core/constants';
+import { PHYSICS, SCORING, TIMER_UNITS_PER_SEC } from '../core/constants';
 import { SWING_BY_DIFFICULTY, saveProgress, loadProgress } from '../core/settings';
 import { Renderer } from '../render/renderer';
 import { PALETTE, OVERLAY } from '../render/colors';
-import { renderHud, hudHeight } from '../render/hud';
+import { renderHud, hudHeight, hudTotalHeight } from '../render/hud';
 import { TouchControls } from '../render/touch-controls';
 import { pointInRect } from '../math/collision';
 import { clamp } from '../math/vec2';
 import { BonusScene } from './bonus-scene';
 import { GameOverScene } from './game-over-scene';
+import { Menu } from './ui';
 
 type Phase = 'ready' | 'playing' | 'dying' | 'paused';
 
@@ -57,6 +58,7 @@ export class GameScene implements Scene {
   private goalPulse = 0;
   private particles: Particle[] = [];
   private pauseBtn = { x: 0, y: 0, w: 0, h: 0 };
+  private pauseMenu: Menu | null = null;
   private audio!: import('../core/audio').Audio;
 
   constructor(private readonly session: GameSession) {
@@ -101,21 +103,55 @@ export class GameScene implements Scene {
     }
   }
 
+  private layoutPauseBtn(r: import('../render/renderer').Renderer): void {
+    const ps = hudHeight(r) * 0.8;
+    this.pauseBtn = { x: r.width - ps - 6, y: hudHeight(r) + 26, w: ps, h: ps };
+  }
+
+  private buildPauseMenu(ctx: SceneContext): Menu {
+    return new Menu(
+      [
+        {
+          label: () => 'RESUME',
+          onSelect: () => {
+            this.phase = 'playing';
+            this.pauseMenu = null;
+          },
+        },
+        {
+          label: () => 'QUIT TO TITLE',
+          onSelect: () => ctx.setScene(new GameOverScene(this.session)),
+        },
+      ],
+      ctx.audio,
+    );
+  }
+
   update(dtRaw: number, ctx: SceneContext): void {
     this.touch.update(ctx.r, ctx.input);
     this.goalPulse += dtRaw;
+    this.layoutPauseBtn(ctx.r);
 
     // pause toggle (keyboard edge or touch button tap)
     const pauseTap = ctx.input.taps.some((t) =>
       pointInRect(t.x / ctx.r.dpr, t.y / ctx.r.dpr, this.pauseBtn),
     );
     if (ctx.input.wasPressed('pause') || pauseTap) {
-      if (this.phase === 'playing') this.phase = 'paused';
-      else if (this.phase === 'paused') this.phase = 'playing';
+      if (this.phase === 'playing') {
+        this.phase = 'paused';
+        this.pauseMenu = this.buildPauseMenu(ctx);
+      } else if (this.phase === 'paused') {
+        this.phase = 'playing';
+        this.pauseMenu = null;
+      }
     }
 
     if (this.phase === 'paused') {
       this.audio?.setThrust(0);
+      if (this.pauseMenu) {
+        const big = Math.min(ctx.r.width, ctx.r.height);
+        this.pauseMenu.update(ctx.r, ctx.input, ctx.r.width / 2, ctx.r.height * 0.55, big * 0.05, big * 0.1);
+      }
       return;
     }
 
@@ -175,8 +211,8 @@ export class GameScene implements Scene {
 
     if (this.invuln > 0) this.invuln -= dt;
 
-    // timer
-    this.timer = Math.max(0, this.timer - 16 * dt);
+    // timer (recovered ROM rate; see TIMER_UNITS_PER_SEC)
+    this.timer = Math.max(0, this.timer - TIMER_UNITS_PER_SEC * dt);
 
     // thrust sound
     if (ctx.settings.sound) this.audio?.setThrust(this.balloon.thrusting ? 1 : 0);
@@ -274,7 +310,7 @@ export class GameScene implements Scene {
   }
 
   private playRect(r: Renderer): { x: number; y: number; w: number; h: number } {
-    const top = hudHeight(r) + 32;
+    const top = hudTotalHeight(r);
     return { x: 0, y: top, w: r.width, h: r.height - top };
   }
 
@@ -348,11 +384,10 @@ export class GameScene implements Scene {
       blowerWarn: this.phase === 'playing' ? this.blower.idleRatio : 0,
     });
 
-    // pause button
-    const ps = hudHeight(r) * 0.8;
-    this.pauseBtn = { x: r.width - ps - 6, y: hudHeight(r) + 26, w: ps, h: ps };
-    r.roundRect(this.pauseBtn.x, this.pauseBtn.y, ps, ps, 4, OVERLAY.btn);
-    r.text(this.phase === 'paused' ? '▶' : 'II', this.pauseBtn.x + ps / 2, this.pauseBtn.y + ps / 2, ps * 0.5, PALETTE.ink, 'center', 'middle');
+    // pause button (rect computed in update so the hit-test is never stale)
+    const pb = this.pauseBtn;
+    r.roundRect(pb.x, pb.y, pb.w, pb.h, 4, OVERLAY.btn);
+    r.text(this.phase === 'paused' ? '▶' : 'II', pb.x + pb.w / 2, pb.y + pb.h / 2, pb.w * 0.5, PALETTE.ink, 'center', 'middle');
 
     this.touch.render(r, ctx.input);
 
@@ -361,8 +396,9 @@ export class GameScene implements Scene {
       this.banner(r, this.phaseT < 1.0 ? 'READY' : 'GO!');
     } else if (this.phase === 'paused') {
       this.dim(r);
-      this.banner(r, 'PAUSED');
-      r.text('tap II or press P to resume', r.width / 2, r.height * 0.5 + hudHeight(r), Math.min(r.width, r.height) * 0.035, PALETTE.mid, 'center', 'middle');
+      const big = Math.min(r.width, r.height);
+      r.text('PAUSED', r.width / 2, r.height * 0.34, big * 0.1, PALETTE.ink, 'center', 'middle');
+      if (this.pauseMenu) this.pauseMenu.render(r, r.width / 2, r.height * 0.55, big * 0.05, big * 0.1);
     }
   }
 

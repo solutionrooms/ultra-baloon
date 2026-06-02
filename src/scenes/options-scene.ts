@@ -12,7 +12,7 @@ export class OptionsScene implements Scene {
   private note = '';
 
   onEnter(ctx: SceneContext): void {
-    const maxStart = Math.min(loadProgress().highestLevel, MAX_LEVEL);
+    const maxStart = Math.max(1, Math.min(loadProgress().highestLevel, MAX_LEVEL));
     this.menu = new Menu(
       [
         {

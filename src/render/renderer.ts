@@ -9,7 +9,7 @@ export interface ScreenRect {
 
 /**
  * Canvas renderer. Drawing happens in CSS-pixel "screen" space (this.width x this.height).
- * A camera maps world units -> screen px (set via fitWorld / follow before drawing the world).
+ * A camera maps world units -> screen px (set via fitWorld before drawing the world).
  */
 export class Renderer {
   readonly canvas: HTMLCanvasElement;
@@ -40,10 +40,16 @@ export class Renderer {
     this.dpr = dpr;
     this.width = cssW;
     this.height = cssH;
-    this.canvas.style.width = cssW + 'px';
-    this.canvas.style.height = cssH + 'px';
-    this.canvas.width = Math.floor(cssW * dpr);
-    this.canvas.height = Math.floor(cssH * dpr);
+    // Only touch the backing store when it actually changes — assigning canvas.width/height
+    // reallocates and clears the bitmap, so doing it every frame is wasteful.
+    const bw = Math.floor(cssW * dpr);
+    const bh = Math.floor(cssH * dpr);
+    if (this.canvas.width !== bw || this.canvas.height !== bh) {
+      this.canvas.style.width = cssW + 'px';
+      this.canvas.style.height = cssH + 'px';
+      this.canvas.width = bw;
+      this.canvas.height = bh;
+    }
   }
 
   beginFrame(): void {
@@ -68,15 +74,6 @@ export class Renderer {
     this.offY = screen.y + (screen.h - drawnH) / 2;
     this.camX = world.x;
     this.camY = world.y;
-  }
-
-  /** Center the camera on a world point at a fixed zoom (world units per screen). */
-  follow(centerX: number, centerY: number, worldUnitsAcross: number, screen: ScreenRect): void {
-    this.zoom = screen.w / worldUnitsAcross;
-    this.camX = centerX - screen.w / 2 / this.zoom;
-    this.camY = centerY - screen.h / 2 / this.zoom;
-    this.offX = screen.x;
-    this.offY = screen.y;
   }
 
   get worldZoom(): number {

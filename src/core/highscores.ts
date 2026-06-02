@@ -23,7 +23,10 @@ interface Store {
 
 export function loadHighScores(): HighScore[] {
   const s = load<Store>(KEY, { scores: SEED });
-  return [...s.scores].sort((a, b) => b.score - a.score).slice(0, MAX);
+  const arr = Array.isArray(s.scores)
+    ? s.scores.filter((e) => e && typeof e.score === 'number' && typeof e.name === 'string')
+    : SEED;
+  return [...arr].sort((a, b) => b.score - a.score).slice(0, MAX);
 }
 
 export function qualifies(score: number): boolean {
