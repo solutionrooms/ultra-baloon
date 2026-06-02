@@ -1,99 +1,8 @@
 import { Renderer } from './renderer';
+import { PALETTE } from './colors';
 import iconJson from '../data/extracted/icon.json';
-import blowerJson from '../data/extracted/blower.json';
 
 const ICON = iconJson as unknown as { width: number; height: number; pixels: number[][] };
-
-interface BlowerFrame {
-  w: number;
-  h: number;
-  rowBytes: number;
-  p0: string;
-  p1: string;
-}
-const BLOWER = blowerJson as unknown as { frames: BlowerFrame[] };
-
-function b64(s: string): Uint8Array {
-  const bin = atob(s);
-  const out = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
-  return out;
-}
-
-// Pre-rendered offscreen canvases for each Blower frame (built once).
-const blowerCanvases: (HTMLCanvasElement | null)[] = BLOWER.frames.map(() => null);
-
-function buildBlowerCanvas(idx: number): HTMLCanvasElement {
-  const f = BLOWER.frames[idx];
-  const cv = document.createElement('canvas');
-  cv.width = f.w;
-  cv.height = f.h;
-  const c = cv.getContext('2d')!;
-  const p0 = b64(f.p0);
-  const p1 = b64(f.p1);
-  const img = c.createImageData(f.w, f.h);
-  const W = f.w;
-  const H = f.h;
-  const rb = f.rowBytes;
-  const ink = [0x16, 0x16, 0x13]; // outline
-  const gray = [0x9a, 0x9a, 0x90]; // back-of-head shading
-  const faceFill = [0xf2, 0xf2, 0xea]; // white face
-  const bit = (m: Uint8Array, x: number, y: number): number =>
-    x < 0 || y < 0 || x >= W || y >= H ? 0 : (m[y * rb + (x >> 3)] >> (7 - (x & 7))) & 1;
-  // Silhouette = union of the two shape planes; render it as a white face with a computed
-  // dark outline around the border + eye/mouth holes. Plane 0 = the white face; the outer
-  // ring (in plane 1 only) = gray (back of head).
-  const solid = (x: number, y: number): number => (bit(p1, x, y) || bit(p0, x, y) ? 1 : 0);
-  for (let y = 0; y < H; y++) {
-    for (let x = 0; x < W; x++) {
-      const o = (y * W + x) * 4;
-      if (!solid(x, y)) {
-        img.data[o + 3] = 0;
-        continue;
-      }
-      const edge = !(solid(x - 1, y) && solid(x + 1, y) && solid(x, y - 1) && solid(x, y + 1));
-      const col = edge ? ink : bit(p0, x, y) ? faceFill : gray;
-      img.data[o] = col[0];
-      img.data[o + 1] = col[1];
-      img.data[o + 2] = col[2];
-      img.data[o + 3] = 255;
-    }
-  }
-  c.putImageData(img, 0, 0);
-  return cv;
-}
-
-/** Draw a recovered Mr. Blower face frame. The face blows toward +x (mouth on the right);
- * for the right edge it is flipped. `edgeX`/`cy` are screen px; `targetH` is on-screen height. */
-export function drawBlowerFace(
-  r: Renderer,
-  idx: number,
-  edgeX: number,
-  cy: number,
-  targetH: number,
-  side: 'left' | 'right',
-): void {
-  const f = BLOWER.frames[idx];
-  if (!blowerCanvases[idx]) blowerCanvases[idx] = buildBlowerCanvas(idx);
-  const cv = blowerCanvases[idx]!;
-  const scale = targetH / f.h;
-  const w = f.w * scale;
-  const h = f.h * scale;
-  const { ctx } = r;
-  ctx.save();
-  ctx.imageSmoothingEnabled = false;
-  if (side === 'left') {
-    // head-back at the left edge, mouth points right (into play)
-    ctx.translate(edgeX, cy - h / 2);
-    ctx.drawImage(cv, 0, 0, w, h);
-  } else {
-    // flip: head-back at the right edge, mouth points left
-    ctx.translate(edgeX, cy - h / 2);
-    ctx.scale(-1, 1);
-    ctx.drawImage(cv, 0, 0, w, h);
-  }
-  ctx.restore();
-}
 
 /** Draw the byte-exact recovered 32×32 app icon at (x,y) top-left, each source pixel `scale` px. */
 export function drawIcon(r: Renderer, x: number, y: number, scale: number, color: string): void {
@@ -108,3 +17,102 @@ export function drawIcon(r: Renderer, x: number, y: number, scale: number, color
 }
 
 export const ICON_SIZE = ICON.width;
+
+const WHITE = '#f4f4ec';
+
+/**
+ * Mr. Blower — a side-profile blowing face. The original has no clean profile sprite
+ * (its sheet holds the title letters / props), so this is a faithful vector recreation:
+ * round head with a gray back, effort brow + eye, nose, puffed cheek, and a blowing
+ * mouth with wind streams. `edgeX`/`cy` are screen px; the face looks/blows inward
+ * (right from the left edge, left from the right edge).
+ */
+export function drawBlowerFace(
+  r: Renderer,
+  edgeX: number,
+  cy: number,
+  targetH: number,
+  side: 'left' | 'right',
+  blowing: boolean,
+): void {
+  const { ctx } = r;
+  const dir = side === 'left' ? 1 : -1; // inward (look + blow direction)
+  const h = targetH;
+  const rx = 0.36 * h;
+  const ry = 0.46 * h;
+  const hx = edgeX + dir * rx * 0.7;
+  const hy = cy;
+  const lw = Math.max(1.5, h * 0.045);
+  const INK = PALETTE.ink;
+  const GRAY = PALETTE.mid;
+
+  const ell = (cx: number, cyy: number, ax: number, ay: number, fill: string | null, stroke: boolean): void => {
+    ctx.beginPath();
+    ctx.ellipse(cx, cyy, ax, ay, 0, 0, Math.PI * 2);
+    if (fill) {
+      ctx.fillStyle = fill;
+      ctx.fill();
+    }
+    if (stroke) ctx.stroke();
+  };
+
+  ctx.save();
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+  ctx.lineWidth = lw;
+  ctx.strokeStyle = INK;
+
+  ell(hx, hy, rx, ry, GRAY, false); // gray head base
+  ell(hx + dir * rx * 0.4, hy, rx * 0.9, ry - 2, WHITE, false); // white face front
+  ell(hx, hy, rx, ry, null, true); // head outline
+
+  // puffed cheek (front-lower)
+  ell(hx + dir * rx * 0.62, hy + ry * 0.3, 0.17 * h, 0.17 * h, WHITE, true);
+
+  // nose (front bump)
+  ctx.beginPath();
+  ctx.moveTo(hx + dir * rx * 0.7, hy - ry * 0.12);
+  ctx.lineTo(hx + dir * rx * 1.12, hy + ry * 0.04);
+  ctx.lineTo(hx + dir * rx * 0.66, hy + ry * 0.12);
+  ctx.closePath();
+  ctx.fillStyle = WHITE;
+  ctx.fill();
+  ctx.stroke();
+
+  // eye + pupil
+  const ex = hx + dir * rx * 0.22;
+  const ey = hy - ry * 0.44;
+  ctx.lineWidth = Math.max(1.5, h * 0.03);
+  ell(ex, ey, 0.07 * h, 0.07 * h, WHITE, true);
+  ell(ex + dir * h * 0.018, ey, 0.033 * h, 0.033 * h, INK, false);
+
+  // effort brow
+  ctx.lineWidth = lw;
+  ctx.beginPath();
+  ctx.moveTo(ex - dir * 0.09 * h, ey - 0.12 * h);
+  ctx.lineTo(ex + dir * 0.07 * h, ey - 0.04 * h);
+  ctx.stroke();
+
+  // blowing mouth
+  const mx = hx + dir * rx * 0.95;
+  const my = hy + ry * 0.1;
+  ctx.fillStyle = INK;
+  ctx.beginPath();
+  ctx.ellipse(mx, my, 0.045 * h, 0.07 * h, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // wind streams while blowing
+  if (blowing) {
+    ctx.strokeStyle = GRAY;
+    ctx.lineWidth = Math.max(2, h * 0.04);
+    for (let i = 0; i < 4; i++) {
+      const yy = my + (i - 1.5) * 0.11 * h;
+      ctx.beginPath();
+      ctx.moveTo(mx + dir * 0.08 * h, yy);
+      ctx.lineTo(mx + dir * (0.42 + i * 0.1) * h, yy);
+      ctx.stroke();
+    }
+  }
+
+  ctx.restore();
+}

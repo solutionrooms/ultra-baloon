@@ -7,7 +7,7 @@ import { renderGoal } from '../entities/goal';
 import { SpikyBall } from '../entities/spiky-ball';
 import { MrBlower } from '../entities/mr-blower';
 import { HazardField } from '../entities/hazards';
-import { resolveCircleVsRects } from '../levels/maze';
+import { circleHitsAnyRect } from '../levels/maze';
 import { PHYSICS, SCORING, TIMER_UNITS_PER_SEC } from '../core/constants';
 import { SWING_BY_DIFFICULTY, saveProgress, loadProgress } from '../core/settings';
 import { Renderer } from '../render/renderer';
@@ -191,18 +191,6 @@ export class GameScene implements Scene {
     };
     this.balloon.update(dt, input, swing);
 
-    // collide vs walls + moving walls
-    const solids = [...this.level.walls, ...this.hazards.movingWallRects];
-    const res = resolveCircleVsRects(this.balloon, this.balloon.radius, solids);
-    if (res.hit) {
-      // kill velocity component going into the surface (slide)
-      const vn = this.balloon.vx * res.nx + this.balloon.vy * res.ny;
-      if (vn < 0) {
-        this.balloon.vx -= vn * res.nx;
-        this.balloon.vy -= vn * res.ny;
-      }
-    }
-
     this.hazards.update(dt, ctx.audio, ctx.settings.sound);
     this.flagA.update(dt);
     this.flagB.update(dt);
@@ -234,10 +222,12 @@ export class GameScene implements Scene {
       this.spiky?.reset(); // flag B banishes the spiky ball
     }
 
-    // fatal collisions
+    // fatal collisions: touching ANY wall (or moving wall), a hazard, or the spiky ball kills.
     if (this.invuln <= 0) {
+      const solids = [...this.level.walls, ...this.hazards.movingWallRects];
+      const wallHit = circleHitsAnyRect(this.balloon.x, this.balloon.y, br, solids);
       const spikyHit = this.spiky?.active && this.near(this.spiky.x, this.spiky.y, br + this.spiky.radius);
-      if (this.hazards.hits(this.balloon.x, this.balloon.y, br) || spikyHit) {
+      if (wallHit || this.hazards.hits(this.balloon.x, this.balloon.y, br) || spikyHit) {
         this.die(ctx);
         return;
       }

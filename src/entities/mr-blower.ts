@@ -1,6 +1,5 @@
 import { PHYSICS } from '../core/constants';
 import { Renderer } from '../render/renderer';
-import { PALETTE } from '../render/colors';
 import { Balloon } from './balloon';
 import { Audio } from '../core/audio';
 import { drawBlowerFace } from '../render/sprites';
@@ -57,7 +56,6 @@ export class MrBlower {
     const faceOut = blow > 0 ? 1 : warn; // 0 hidden, 1 fully out
     if (faceOut <= 0.02) return;
 
-    const { ctx } = r;
     const dir = this.side === 'left' ? 1 : -1;
     const targetH = r.sl(40); // ~40 world units tall, like the original
     const ex = r.sx(this.side === 'left' ? 0 : worldW);
@@ -66,25 +64,6 @@ export class MrBlower {
     const edgeX = ex - dir * slide;
     const cy = r.sy(this.atY);
 
-    // wind puff lines while actively blowing
-    if (blow > 0) {
-      ctx.strokeStyle = PALETTE.mid;
-      ctx.lineWidth = Math.max(1, r.sl(1.4));
-      const mouthX = edgeX + dir * targetH * 0.85;
-      for (let i = 0; i < 4; i++) {
-        const yy = cy + (i - 1.5) * targetH * 0.18;
-        const reach = targetH * (0.4 + 2.4 * blow + i * 0.2);
-        ctx.beginPath();
-        ctx.moveTo(mouthX, yy);
-        ctx.lineTo(mouthX + dir * reach, yy);
-        ctx.stroke();
-      }
-    }
-
-    // recovered Mr. Blower face — frame 1 (mouth wide) while blowing, with a quick huff;
-    // frame 0 (calmer) while only warning.
-    // Frame 0 is the clean calm profile (matches the original); the blow is conveyed by the
-    // wind puffs above. Frame 1 (mouth wide) reads too busy at this size.
-    drawBlowerFace(r, 0, edgeX, cy, targetH, this.side);
+    drawBlowerFace(r, edgeX, cy, targetH, this.side, blow > 0);
   }
 }
