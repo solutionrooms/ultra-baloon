@@ -83,7 +83,8 @@ export class MrBlower {
 
     // recovered Mr. Blower face — frame 1 (mouth wide) while blowing, with a quick huff;
     // frame 0 (calmer) while only warning.
-    const frame = blow > 0 ? 1 : 0;
-    drawBlowerFace(r, frame, edgeX, cy, targetH, this.side);
+    // Frame 0 is the clean calm profile (matches the original); the blow is conveyed by the
+    // wind puffs above. Frame 1 (mouth wide) reads too busy at this size.
+    drawBlowerFace(r, 0, edgeX, cy, targetH, this.side);
   }
 }
