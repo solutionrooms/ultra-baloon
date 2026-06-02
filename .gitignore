@@ -3,3 +3,6 @@ dist
 *.local
 .vite
 .DS_Store
+
+__pycache__/
+*.pyc

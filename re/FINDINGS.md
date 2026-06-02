@@ -213,3 +213,24 @@ Window bounds 160×160 (full screen); form ID 1000; **title "Krazy Balloon"**. N
 5. Two distinct 0x2710 literals: extra-life threshold (0x2b56) vs. sound duration (0x37b2) — only the former is the extra-life value.
 
 Because of (2) and (3), the `physics.json` swing/gravity/buoyancy/thrust values are explicitly labelled **inferred** or **tuned** playable defaults; only the move step, slow-mo factor and start position are **recovered**.
+
+---
+
+## 6. Maze decompression — SOLVED (update)
+
+The MPF (LZ77 + canonical-Huffman, backward 16-bit reader) decompressor was ported by
+**executing the actual 68k bytes** of functions 0x38d2/0x3a10/0x3a46/0x3a52/0x3a6a/0x3a76 in a
+small faithful interpreter (`tools/mpf_decompress.py`). Validation: **all 10 levels decode to
+exactly their uncompressed size** (8000/12000/16000 bytes) and the routine returns `usize`.
+
+**Bitplane layout (recovered):** each decompressed row is 40 bytes = 20-byte **low plane (the
+1bpp wall/collision mask, MSB = leftmost pixel, 1 = wall)** + 20-byte shading plane. Borders read
+as solid wall; interiors show the original diagonal-slope mazes. Wall densities 0.35–0.55.
+
+The 1bpp wall masks for all 10 levels are emitted to `src/data/extracted/maze{0..9}.json` (base64),
+and the byte-exact object lists to `src/data/extracted/levels.json`. The game now loads all 10
+real levels: walls via greedy rectangle decomposition of the mask; goal/flagA/flagB at their exact
+recovered coordinates; the conditional-spawn field drives the flag-A spiky ball; object types
+5/12→static nasty, 9→oscillating nasty, 7→launcher, 1→moving wall (behaviours inferred, positions
+byte-exact). **Levels 2–10 did not require a registered ROM — all 10 levels' data lives in the
+unregistered BALLOON.PRC.**

@@ -36,6 +36,17 @@ export interface SpikyBall {
   speed: number; // homing speed once active
 }
 
+/** A fatal nasty — stationary (osc fields absent) or oscillating along an axis. */
+export interface Nasty {
+  x: number;
+  y: number;
+  radius: number;
+  oscAxis?: 'x' | 'y';
+  oscAmp?: number;
+  oscSpeed?: number;
+  phase?: number;
+}
+
 export interface LevelData {
   id: number;
   name: string;
@@ -50,6 +61,7 @@ export interface LevelData {
   movingWalls: MovingWall[];
   pipes: Pipe[];
   launchers: Launcher[];
+  nasties: Nasty[];
   spikyBallOnFlagA: boolean;
   spikyBall?: SpikyBall;
 }

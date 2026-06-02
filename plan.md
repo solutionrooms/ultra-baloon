@@ -132,4 +132,7 @@ Companion to [`lander_prd.md`](./lander_prd.md). Recreate **"The Mad Balloon" /
 - Adversarial multi-agent review run (16 findings) and all fixed (timer rate, WASD double-fire,
   resize realloc, scene-race guard, touch soft-lock, corrupted-storage guards, HUD spacing, …).
 - Verified in-browser: title → play → swing/collide/scroll → reach goal → next lap → pause/quit.
-- **Future:** decompress the `MPF` maze for byte-exact walls; add levels 2–10 from a registered ROM.
+- **DONE (byte-exact walls + all 10 levels):** the `MPF` decompressor was ported by executing the
+  real 68k bytes in a faithful interpreter (`tools/mpf_decompress.py`); all 10 mazes decode to their
+  exact uncompressed size. All 10 levels (walls + objects) are loaded from the unregistered ROM — no
+  registered copy was needed. See `re/FINDINGS.md` §6.

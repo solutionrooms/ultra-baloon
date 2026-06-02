@@ -36,8 +36,11 @@ levels/  level-data.ts (types + loader), level1.ts, maze.ts (collision)
 entities/ balloon.ts, flag.ts, goal.ts, spiky-ball.ts, mr-blower.ts, diamond.ts,
           hazards/{moving-wall,pipe,launcher,dart,bouncer}.ts
 scenes/  scene.ts, title, options, game, bonus-room, bonus-level, game-over, high-scores, about
-data/extracted/  physics.json, scoring.json, level1.json, icon.json, ui.json  (from RE)
+data/extracted/  physics.json, scoring.json, icon.json, ui.json,
+                 levels.json (all 10 levels' objects), maze0..9.json (byte-exact wall masks)
 ```
+`tools/mpf_decompress.py` is a small 68k interpreter that executes the ROM's real MPF decompressor
+to extract the byte-exact maze wall masks.
 
 ## Fidelity
 Extracted ROM data lives in `src/data/extracted/` (see `re/FINDINGS.md` for what was recovered vs.

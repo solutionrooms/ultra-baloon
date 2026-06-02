@@ -111,7 +111,7 @@ export class Renderer {
     ctx.fillStyle = PALETTE.ink;
     ctx.fillRect(sx0, sy0, sw, sh);
 
-    const CELL = 9; // world units
+    const CELL = 5; // world units
     const cellPx = CELL * this.zoom;
     if (cellPx >= 4) {
       const gx0 = Math.floor(wx / CELL) * CELL;

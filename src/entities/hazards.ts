@@ -14,10 +14,17 @@ interface Projectile {
   kind: 'drop' | 'splat' | 'dart';
 }
 
+interface NastyRT {
+  x: number;
+  y: number;
+  r: number;
+}
+
 /** Runtime state for a level's dynamic hazards. */
 export class HazardField {
   projectiles: Projectile[] = [];
   movingWallRects: Rect[] = [];
+  nasties: NastyRT[] = [];
   private phase = 0;
   private pipeTimers: number[] = [];
   private launcherTimers: number[] = [];
@@ -31,7 +38,19 @@ export class HazardField {
     this.phase = 0;
     this.pipeTimers = this.level.pipes.map((p, i) => p.interval * (0.3 + 0.2 * i));
     this.launcherTimers = this.level.launchers.map((l, i) => l.interval * (0.5 + 0.15 * i));
+    this.nasties = this.level.nasties.map((n) => ({ x: n.x, y: n.y, r: n.radius }));
     this.computeMovingWalls();
+    this.computeNasties();
+  }
+
+  private computeNasties(): void {
+    this.level.nasties.forEach((n, i) => {
+      if (n.oscAxis && n.oscAmp) {
+        const off = Math.sin(this.phase * (n.oscSpeed ?? 1) + (n.phase ?? 0)) * n.oscAmp;
+        this.nasties[i].x = n.x + (n.oscAxis === 'x' ? off : 0);
+        this.nasties[i].y = n.y + (n.oscAxis === 'y' ? off : 0);
+      }
+    });
   }
 
   private computeMovingWalls(): void {
@@ -49,6 +68,7 @@ export class HazardField {
   update(dt: number, audio: Audio, soundOn: boolean): void {
     this.phase += dt;
     this.computeMovingWalls();
+    this.computeNasties();
 
     // pipes drip
     this.level.pipes.forEach((p, i) => {
@@ -92,10 +112,13 @@ export class HazardField {
     });
   }
 
-  /** Fatal if the balloon overlaps any projectile. */
+  /** Fatal if the balloon overlaps any projectile or nasty. */
   hits(bx: number, by: number, br: number): boolean {
     for (const pr of this.projectiles) {
       if (circleCircle(bx, by, br, pr.x, pr.y, pr.r)) return true;
+    }
+    for (const n of this.nasties) {
+      if (circleCircle(bx, by, br, n.x, n.y, n.r)) return true;
     }
     return false;
   }
@@ -114,6 +137,29 @@ export class HazardField {
     // launchers (origins)
     for (const l of this.level.launchers) {
       r.worldCircle(l.x, l.y, 5, PALETTE.ink);
+    }
+    // nasties (spiky balls)
+    for (const n of this.nasties) {
+      const cx = r.sx(n.x);
+      const cy = r.sy(n.y);
+      const rad = r.sl(n.r);
+      ctx.fillStyle = PALETTE.ink;
+      const spikes = 8;
+      ctx.beginPath();
+      for (let k = 0; k < spikes * 2; k++) {
+        const ang = this.phase * 2 + (k / (spikes * 2)) * Math.PI * 2;
+        const rr = k % 2 === 0 ? rad : rad * 0.55;
+        const px = cx + Math.cos(ang) * rr;
+        const py = cy + Math.sin(ang) * rr;
+        if (k === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = PALETTE.bg;
+      ctx.beginPath();
+      ctx.arc(cx, cy, rad * 0.28, 0, Math.PI * 2);
+      ctx.fill();
     }
     // projectiles
     for (const pr of this.projectiles) {

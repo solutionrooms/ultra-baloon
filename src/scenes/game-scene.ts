@@ -375,7 +375,7 @@ export class GameScene implements Scene {
     renderHud(r, {
       score: this.session.score,
       lives: this.session.lives,
-      levelName: `LAP ${this.session.level} · ${this.level.name}`,
+      levelName: `LVL ${((this.session.level - 1) % 10) + 1} · ${this.level.name}`,
       timer: this.timer,
       timerStart: SCORING.timerStart,
       flagA: this.flagA.collected,

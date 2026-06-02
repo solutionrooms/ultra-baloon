@@ -1,6 +1,6 @@
 {
   "_source": "Flat runtime constants. RECOVERED: direct thrust movement (~1px/frame @25fps), slow-mo x0.5, NO gravity (re/FINDINGS.md §3.4). The swing is a manual-faithful reconstruction (v1.0 binary's sine oscillator shipped as dead code, §3.5) — kept gentle so it perturbs control without flinging the balloon.",
-  "balloonRadius": 5,
+  "balloonRadius": 4,
   "moveSpeed": 46,
   "responsiveness": 11,
   "swing": {

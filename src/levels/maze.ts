@@ -78,3 +78,45 @@ export function circleHitsAnyRect(
   for (const r of rects) if (circleRect(cx, cy, radius, r)) return true;
   return false;
 }
+
+/**
+ * Greedy maximal-rectangle decomposition of a 1bpp wall mask (set bit = wall).
+ * `mask` is row-major, `rowBytes` bytes per row, MSB = leftmost pixel.
+ * Produces axis-aligned wall Rects (1 unit = 1 pixel) for collision + rendering.
+ */
+export function maskToRects(mask: Uint8Array, width: number, height: number, rowBytes: number): Rect[] {
+  const wall = (x: number, y: number): boolean => {
+    const byte = mask[y * rowBytes + (x >> 3)];
+    return ((byte >> (7 - (x & 7))) & 1) === 1;
+  };
+  const used = new Uint8Array(width * height);
+  const rects: Rect[] = [];
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      if (used[y * width + x] || !wall(x, y)) continue;
+      // grow width along the row
+      let x2 = x;
+      while (x2 < width && !used[y * width + x2] && wall(x2, y)) x2++;
+      const w = x2 - x;
+      // grow height while the whole [x,x2) span is wall & unused
+      let y2 = y + 1;
+      grow: for (; y2 < height; y2++) {
+        for (let xx = x; xx < x2; xx++) {
+          if (used[y2 * width + xx] || !wall(xx, y2)) break grow;
+        }
+      }
+      const h = y2 - y;
+      for (let yy = y; yy < y2; yy++) for (let xx = x; xx < x2; xx++) used[yy * width + xx] = 1;
+      rects.push({ x, y, w, h });
+    }
+  }
+  return rects;
+}
+
+/** Decode a base64 string to a Uint8Array (browser atob). */
+export function b64ToBytes(b64: string): Uint8Array {
+  const bin = atob(b64);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
