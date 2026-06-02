@@ -32,19 +32,30 @@ function buildBlowerCanvas(idx: number): HTMLCanvasElement {
   const p0 = b64(f.p0);
   const p1 = b64(f.p1);
   const img = c.createImageData(f.w, f.h);
-  const ink = [0x16, 0x16, 0x13];
-  const mid = [0x6f, 0x6f, 0x68];
-  for (let y = 0; y < f.h; y++) {
-    for (let x = 0; x < f.w; x++) {
-      const bit = (m: Uint8Array) => (m[y * f.rowBytes + (x >> 3)] >> (7 - (x & 7))) & 1;
-      const o = (y * f.w + x) * 4;
-      if (bit(p0)) {
-        img.data[o] = ink[0]; img.data[o + 1] = ink[1]; img.data[o + 2] = ink[2]; img.data[o + 3] = 255;
-      } else if (bit(p1)) {
-        img.data[o] = mid[0]; img.data[o + 1] = mid[1]; img.data[o + 2] = mid[2]; img.data[o + 3] = 255;
-      } else {
+  const W = f.w;
+  const H = f.h;
+  const rb = f.rowBytes;
+  const ink = [0x16, 0x16, 0x13]; // outline
+  const gray = [0x9a, 0x9a, 0x90]; // shading (back of head)
+  const faceFill = [0xe3, 0xe3, 0xdb]; // light face
+  const bit = (m: Uint8Array, x: number, y: number): number =>
+    x < 0 || y < 0 || x >= W || y >= H ? 0 : (m[y * rb + (x >> 3)] >> (7 - (x & 7))) & 1;
+  // Solid silhouette = union of the two shape planes; the rendered face is that fill with a
+  // computed dark outline around its border (and the eye/mouth holes), plane 0 = gray shading.
+  const solid = (x: number, y: number): number => (bit(p1, x, y) || bit(p0, x, y) ? 1 : 0);
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const o = (y * W + x) * 4;
+      if (!solid(x, y)) {
         img.data[o + 3] = 0;
+        continue;
       }
+      const edge = !(solid(x - 1, y) && solid(x + 1, y) && solid(x, y - 1) && solid(x, y + 1));
+      const col = edge ? ink : bit(p0, x, y) ? gray : faceFill;
+      img.data[o] = col[0];
+      img.data[o + 1] = col[1];
+      img.data[o + 2] = col[2];
+      img.data[o + 3] = 255;
     }
   }
   c.putImageData(img, 0, 0);
