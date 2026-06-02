@@ -368,6 +368,9 @@ export class GameScene implements Scene {
       this.renderParticles(r);
     }
 
+    if (typeof location !== 'undefined' && location.search.includes('blow')) {
+      this.blower.present(this.balloon.x, this.balloon.y, this.level.width);
+    }
     this.blower.render(r, this.level.width);
     r.ctx.restore();
 

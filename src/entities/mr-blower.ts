@@ -17,6 +17,13 @@ export class MrBlower {
     this.blowing = 0;
   }
 
+  /** Debug: force the face visible (used by the ?blow query flag). */
+  present(bx: number, by: number, worldW: number): void {
+    this.blowing = 1;
+    this.atY = by;
+    this.side = bx < worldW / 2 ? 'left' : 'right';
+  }
+
   /** 0..1 — how close to blowing (for the on-screen warning). */
   get idleRatio(): number {
     return Math.min(1, this.idle / PHYSICS.blowerIdleSeconds);
@@ -76,7 +83,7 @@ export class MrBlower {
 
     // recovered Mr. Blower face — frame 1 (mouth wide) while blowing, with a quick huff;
     // frame 0 (calmer) while only warning.
-    const frame = blow > 0 ? (Math.floor(performance.now() / 110) % 2 === 0 ? 1 : 3) : 0;
+    const frame = blow > 0 ? 1 : 0;
     drawBlowerFace(r, frame, edgeX, cy, targetH, this.side);
   }
 }
