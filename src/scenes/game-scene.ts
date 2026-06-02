@@ -30,11 +30,11 @@ interface Particle {
   life: number;
 }
 
-export function startNewGame(): GameScene {
+export function startNewGame(startLevel = 1): GameScene {
   const session: GameSession = {
     score: 0,
     lives: SCORING.startingLives,
-    level: 1,
+    level: startLevel,
     nextExtraLifeAt: SCORING.extraLifeEvery,
   };
   return new GameScene(session);

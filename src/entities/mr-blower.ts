@@ -3,6 +3,7 @@ import { Renderer } from '../render/renderer';
 import { PALETTE } from '../render/colors';
 import { Balloon } from './balloon';
 import { Audio } from '../core/audio';
+import { drawBlowerFace } from '../render/sprites';
 
 /** Appears when the player idles too long and blows the balloon toward a wall. */
 export class MrBlower {
@@ -50,56 +51,32 @@ export class MrBlower {
     if (faceOut <= 0.02) return;
 
     const { ctx } = r;
-    const dir = this.side === 'left' ? 1 : -1; // inward direction
-    const R = r.sl(20);
+    const dir = this.side === 'left' ? 1 : -1;
+    const targetH = r.sl(40); // ~40 world units tall, like the original
     const ex = r.sx(this.side === 'left' ? 0 : worldW);
-    // when not fully out, slide the head partway off the edge
-    const slide = (1 - faceOut) * R * 1.2;
-    const hx = ex - dir * R * 0.35 - dir * -slide; // head centre
-    const cx = ex + dir * (R * 0.45) - dir * slide; // face front (nose) area
+    // slide the head partway off the edge when only warning (not yet blowing)
+    const slide = (1 - faceOut) * targetH * 0.5;
+    const edgeX = ex - dir * slide;
     const cy = r.sy(this.atY);
 
-    // wind puff lines (longer while actively blowing)
+    // wind puff lines while actively blowing
     if (blow > 0) {
       ctx.strokeStyle = PALETTE.mid;
       ctx.lineWidth = Math.max(1, r.sl(1.4));
+      const mouthX = edgeX + dir * targetH * 0.85;
       for (let i = 0; i < 4; i++) {
-        const yy = cy + (i - 1.5) * R * 0.4;
-        const reach = R * (1.4 + 2.6 * blow + i * 0.25);
+        const yy = cy + (i - 1.5) * targetH * 0.18;
+        const reach = targetH * (0.4 + 2.4 * blow + i * 0.2);
         ctx.beginPath();
-        ctx.moveTo(cx + dir * R * 0.5, yy);
-        ctx.lineTo(cx + dir * reach, yy);
+        ctx.moveTo(mouthX, yy);
+        ctx.lineTo(mouthX + dir * reach, yy);
         ctx.stroke();
       }
     }
 
-    // head (profile): big rounded blob bulging inward from the edge
-    ctx.fillStyle = PALETTE.ink;
-    ctx.beginPath();
-    ctx.ellipse(hx, cy, R, R * 1.25, 0, 0, Math.PI * 2);
-    ctx.fill();
-    // nose bump pointing inward
-    ctx.beginPath();
-    ctx.moveTo(cx, cy - R * 0.18);
-    ctx.lineTo(cx + dir * R * 0.55, cy);
-    ctx.lineTo(cx, cy + R * 0.18);
-    ctx.closePath();
-    ctx.fill();
-
-    // eye
-    ctx.fillStyle = PALETTE.bg;
-    ctx.beginPath();
-    ctx.arc(hx + dir * R * 0.1, cy - R * 0.45, R * 0.16, 0, Math.PI * 2);
-    ctx.fill();
-    // pupil
-    ctx.fillStyle = PALETTE.ink;
-    ctx.beginPath();
-    ctx.arc(hx + dir * R * 0.16, cy - R * 0.45, R * 0.07, 0, Math.PI * 2);
-    ctx.fill();
-    // puffing mouth (open while blowing)
-    ctx.fillStyle = PALETTE.bg;
-    ctx.beginPath();
-    ctx.ellipse(cx + dir * R * 0.18, cy + R * 0.12, R * (0.1 + 0.12 * blow), R * 0.16, 0, 0, Math.PI * 2);
-    ctx.fill();
+    // recovered Mr. Blower face — frame 1 (mouth wide) while blowing, with a quick huff;
+    // frame 0 (calmer) while only warning.
+    const frame = blow > 0 ? (Math.floor(performance.now() / 110) % 2 === 0 ? 1 : 3) : 0;
+    drawBlowerFace(r, frame, edgeX, cy, targetH, this.side);
   }
 }

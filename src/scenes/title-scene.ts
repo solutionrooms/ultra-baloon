@@ -20,6 +20,7 @@ export class TitleScene implements Scene {
     this.menu = new Menu(
       [
         { label: () => 'PLAY', onSelect: () => this.play(ctx) },
+        { label: () => 'LEVEL SELECT', onSelect: () => void import('./level-select-scene').then((m) => ctx.setScene(new m.LevelSelectScene())) },
         { label: () => 'HIGH SCORES', onSelect: () => void import('./high-scores-scene').then((m) => ctx.setScene(new m.HighScoresScene())) },
         { label: () => 'OPTIONS', onSelect: () => void import('./options-scene').then((m) => ctx.setScene(new m.OptionsScene())) },
         { label: () => 'ABOUT', onSelect: () => void import('./about-scene').then((m) => ctx.setScene(new m.AboutScene())) },
@@ -52,7 +53,7 @@ export class TitleScene implements Scene {
     }
     const r = ctx.r;
     const big = Math.min(r.width, r.height);
-    this.menu.update(r, ctx.input, r.width / 2, r.height * 0.56, big * 0.05, big * 0.085);
+    this.menu.update(r, ctx.input, r.width / 2, r.height * 0.52, big * 0.046, big * 0.076);
   }
 
   render(ctx: SceneContext): void {
@@ -84,7 +85,7 @@ export class TitleScene implements Scene {
     r.text('ULTRA BALLOON', r.width / 2, r.height * 0.36, big * 0.092, PALETTE.ink, 'center', 'middle');
     r.text('a remake of The Mad Balloon', r.width / 2, r.height * 0.41, big * 0.034, PALETTE.mid, 'center', 'middle');
 
-    this.menu.render(r, r.width / 2, r.height * 0.56, big * 0.05, big * 0.085);
+    this.menu.render(r, r.width / 2, r.height * 0.52, big * 0.046, big * 0.076);
 
     r.text('© Julian Scott 1998', r.width / 2, r.height * 0.94, big * 0.028, PALETTE.mid, 'center', 'middle');
   }

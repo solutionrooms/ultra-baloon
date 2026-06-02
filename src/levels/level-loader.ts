@@ -148,3 +148,7 @@ function buildLevel(n: number): LevelData {
 export function loadLevel(n: number): LevelData {
   return buildLevel(n);
 }
+
+export function levelName(n: number): string {
+  return NAMES[((n - 1) % MAX_LEVEL + MAX_LEVEL) % MAX_LEVEL] ?? `LEVEL ${n}`;
+}
