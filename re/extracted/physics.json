@@ -1,0 +1,39 @@
+{
+  "_notes": "The Mad Balloon / Krazy Balloon physics. Most balloon motion in the shipped binary is direct thrust; the pendulum-swing sine oscillator is DEAD CODE (routine 0x339e has no callers, no sine table present). Gravity/buoyancy/thrust as forces are NOT implemented (RECOVERED negative). Swing values here are playable reconstructions, clearly labelled.",
+  "coordinateUnits": "pixels; logical play field 160x160, status bar top 16px, play window 160x144",
+  "frame": {
+    "fpsSmooth": { "value": 25, "status": "inferred", "note": "frame delay 4 ticks at a5@(492) set 0x388; SysTicksPerSecond=100 (documented OS const)" },
+    "frameDelayTicksSmooth": { "value": 4, "status": "recovered", "addr": "0x37a/0x388" },
+    "frameDelayTicksFast": { "value": 0, "status": "recovered", "addr": "0x384/0x388" }
+  },
+  "balloonMovement": {
+    "startX": { "value": 80, "status": "recovered", "addr": "0x1dc4", "note": "global default; per-level start overrides from descriptor+4/+6" },
+    "startY": { "value": 80, "status": "recovered", "addr": "0x1dca" },
+    "moveStepPxPerFrame": { "value": 1.0, "status": "recovered", "addr": "0x201a-0x2050", "note": "16.16 fixed; 65536 = 1.0 px per held direction" },
+    "slowMoFactor": { "value": 0.5, "status": "recovered", "addr": "0x2062", "note": "asrl #1 halves dx and dy when action bit 4 held" },
+    "gravity": { "value": 0.0, "status": "recovered", "note": "NO gravity force in balloon update; verified absent" },
+    "buoyancy": { "value": 0.0, "status": "recovered", "note": "NO buoyancy force; verified absent" },
+    "thrust": { "value": 1.0, "status": "recovered", "note": "thrust == direct move step above; no acceleration model" }
+  },
+  "swing": {
+    "_status": "inferred/tuned",
+    "_note": "Pendulum oscillator code at 0x339e (1024-step sine, table a5@(132)) ships DISABLED (caller 0x3388 has zero callers; sine table never built). Values below are playable defaults for a faithful remake, NOT recovered.",
+    "amplitudePx": { "value": 24, "status": "tuned" },
+    "periodFramesByDifficulty": {
+      "easy": { "value": 90, "status": "tuned" },
+      "medium": { "value": 60, "status": "tuned" },
+      "hard": { "value": 40, "status": "tuned" }
+    },
+    "angleStepsPerCircle": { "value": 1024, "status": "recovered", "addr": "0x339e", "note": "10-bit angle in the dead trig routine" }
+  },
+  "scenery": {
+    "oscillatorSpeeds": { "value": [2,4,5,8], "status": "recovered", "addr": "0x3366/0x32d4/0x32f8/0x3380", "note": "ping-pong scenery hazard speeds; the real moving menace in shipped build" },
+    "homingEase": { "value": 0.125, "status": "recovered", "addr": "0x26ee", "note": "asrl #3 = move 1/8 toward target" },
+    "wanderJitterPx": { "value": 2, "status": "recovered", "addr": "0x270c", "note": "+/-2 px via divuw #5 then -2" }
+  },
+  "camera": {
+    "balloonScreenY": { "value": 72, "status": "recovered", "addr": "0x20c4", "note": "cameraY = clamp(balloonY-72, 0, mazeHeight-144)" },
+    "playWindowHeight": { "value": 144, "status": "recovered" },
+    "statusBarHeight": { "value": 16, "status": "recovered" }
+  }
+}

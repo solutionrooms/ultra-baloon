@@ -1,0 +1,22 @@
+{
+  "_notes": "Scoring/timer constants for The Mad Balloon. All values RECOVERED from code_1.bin unless marked.",
+  "flagA": { "value": 500, "status": "recovered", "addr": "0x2cf2" },
+  "flagB": { "value": 1000, "status": "recovered", "addr": "0x2cc8" },
+  "goalSoundId": { "value": 18, "status": "recovered", "addr": "0x2caa" },
+  "extraLifeEvery": { "value": 10000, "status": "recovered", "addr": "0x2b56/0x2b60" },
+  "startingLives": { "value": 3, "status": "recovered", "addr": "0x1d68" },
+  "timerStart": { "value": 999, "status": "recovered", "addr": "0x1e22", "note": "manual rounds to 1000; actual literal is 0x3E7" },
+  "timerDecrementEveryFrames": { "value": 4, "status": "recovered", "addr": "0x24ca" },
+  "timeBonusPerUnit": { "value": 1, "status": "inferred", "note": "no explicit end-of-level time->score multiplier isolated; remaining timer most likely converts 1:1. Bonus-level timed award is 1 or 5 pts (threshold-20 test at 0x2566), distinct from per-level time bonus." },
+  "diamondBase": { "value": 100, "status": "recovered", "addr": "0x1dd0", "note": "a5@(2484) reset each level" },
+  "diamondIncrement": { "value": 40, "status": "recovered", "addr": "0x2c94", "note": "escalating: 100,140,180,220,..." },
+  "highScoreSlots": { "value": 10, "status": "recovered", "addr": "0x3e90", "note": "10 entries x 8 bytes at a5@(2578)" },
+  "defaultTopScore": { "value": 10000, "status": "recovered", "note": "prefs default near 0x194c" },
+  "soundIds": {
+    "flagACollect": { "value": 9, "status": "recovered" },
+    "flagBCollect": { "value": 10, "status": "recovered" },
+    "extraLife": { "value": 11, "status": "recovered", "addr": "0x2b72" },
+    "spikyBallSpawn": { "value": 14, "status": "recovered", "addr": "0x2ce0" },
+    "goal": { "value": 18, "status": "recovered" }
+  }
+}

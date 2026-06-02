@@ -1,0 +1,20 @@
+{
+  "_status": "recovered",
+  "appTitle": "Krazy Balloon",
+  "internalName": "The Mad Balloon",
+  "creatorId": "MaBa",
+  "version": "1.0",
+  "form": { "id": 1000, "title": "Krazy Balloon", "width": 160, "height": 160 },
+  "menu": {
+    "title": "Options",
+    "items": [
+      { "commandId": 1001, "hotkey": "A", "label": "About Krazy Balloon" },
+      { "commandId": 1002, "hotkey": "R", "label": "Restart" }
+    ]
+  },
+  "alerts": {
+    "about": { "id": 1000, "title": "About Krazy Balloon", "message": "This is Krazy Balloon,", "buttons": ["Yup!"] },
+    "memoryError": { "id": 1001, "title": "Memory Error", "message": "Unable to allocate memory", "buttons": ["Reset"] }
+  },
+  "optionStrings": ["Difficulty", "Easy", "Medium", "Hard", "Start Level Num", "Sound", "Greyscale Palette", "Remap game buttons", "Enter registration code", "Reset high scores", "Reset defaults"]
+}

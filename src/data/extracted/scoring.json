@@ -1,0 +1,12 @@
+{
+  "_source": "Flat runtime constants. RECOVERED from re/FINDINGS.md (timer starts at 999; diamonds escalate 100/+40). Full provenance in re/extracted/scoring.json.",
+  "flagA": 500,
+  "flagB": 1000,
+  "extraLifeEvery": 10000,
+  "timerStart": 999,
+  "timeBonusPerUnit": 1,
+  "bonusRoomPerDiamond": 250,
+  "bonusLevelDiamondBase": 100,
+  "bonusLevelDiamondStep": 40,
+  "startingLives": 3
+}
